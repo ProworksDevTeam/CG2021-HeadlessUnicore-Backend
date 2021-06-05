@@ -5,6 +5,7 @@
 
     <ItemGroup>
         <PackageReference Include="Umbraco.Cms" Version="9.0.0-beta003" />
+        <PackageReference Include="Our.Umbraco.GraphQL" Version="9.0.0-alpha006" />
     </ItemGroup>
 
 
