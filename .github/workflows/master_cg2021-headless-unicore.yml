@@ -21,6 +21,9 @@ jobs:
       with:
         dotnet-version: '5.0.x'
 
+    - name: Add Beta source
+      run: dotnet nuget add source "https://www.myget.org/F/umbracoprereleases/api/v3/index.json" -n "Umbraco Prereleases"
+
     - name: Build with dotnet
       run: dotnet build --configuration Release
 
