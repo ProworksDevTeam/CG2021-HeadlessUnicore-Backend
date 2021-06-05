@@ -25,7 +25,15 @@ namespace CG2021
 
         public class Cg2021Options
         {
-            public string FrontEndBuildHook { get; set; }
+            public WebsiteBuildOptions WebsiteBuild { get; set; }
+        }
+
+        public class WebsiteBuildOptions
+        {
+            public bool Enabled { get; set; }
+            public string Url { get; set; }
+            public string Authorization { get; set; }
+            public string Content { get; set; }
         }
 
         private class WebsiteRebuilder :
@@ -38,7 +46,7 @@ namespace CG2021
             private readonly ILogger<WebsiteRebuilder> _logger;
             private readonly IOptions<Cg2021Options> _options;
 
-            public WebsiteRebuilder(ILogger<WebsiteRebuilder> logger, IOptions<Cg2021Options> options)
+            public WebsiteRebuilder(ILogger<WebsiteRebuilder> logger, IOptionsSnapshot<Cg2021Options> options)
             {
                 _logger = logger;
                 _options = options;
@@ -54,10 +62,23 @@ namespace CG2021
             {
                 try
                 {
+                    var opts = _options.Value?.WebsiteBuild;
+                    if (opts == null || !opts.Enabled || string.IsNullOrWhiteSpace(opts.Url)) return;
+
                     using (var client = new WebClient())
                     {
-                        var result = client.UploadString(_options.Value.FrontEndBuildHook, "");
-                        _logger.LogInformation("Rebuild website triggered with a result of " + result);
+                        if (!string.IsNullOrEmpty(opts.Authorization)) client.Headers[HttpRequestHeader.Authorization] = opts.Authorization;
+
+                        if (string.IsNullOrEmpty(opts.Content))
+                        {
+                            var result = client.DownloadString(opts.Url);
+                            _logger.LogInformation("Rebuild website triggered by GET with a result of " + result);
+                        }
+                        else
+                        {
+                            var result = client.UploadString(opts.Url, opts.Content);
+                            _logger.LogInformation("Rebuild website triggered by POST with a result of " + result);
+                        }
                     }
                 }
                 catch (Exception ex)
