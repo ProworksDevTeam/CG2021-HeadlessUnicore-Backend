@@ -46,7 +46,7 @@ namespace CG2021
             private readonly ILogger<WebsiteRebuilder> _logger;
             private readonly IOptions<Cg2021Options> _options;
 
-            public WebsiteRebuilder(ILogger<WebsiteRebuilder> logger, IOptionsSnapshot<Cg2021Options> options)
+            public WebsiteRebuilder(ILogger<WebsiteRebuilder> logger, IOptions<Cg2021Options> options)
             {
                 _logger = logger;
                 _options = options;
@@ -60,13 +60,14 @@ namespace CG2021
 
             private void RebuildWebsite()
             {
+                var opts = _options.Value?.WebsiteBuild;
+                if (opts == null || !opts.Enabled || string.IsNullOrWhiteSpace(opts.Url)) return;
+
                 try
                 {
-                    var opts = _options.Value?.WebsiteBuild;
-                    if (opts == null || !opts.Enabled || string.IsNullOrWhiteSpace(opts.Url)) return;
-
                     using (var client = new WebClient())
                     {
+                        client.Headers[HttpRequestHeader.UserAgent] = "Umbraco";
                         if (!string.IsNullOrEmpty(opts.Authorization)) client.Headers[HttpRequestHeader.Authorization] = opts.Authorization;
 
                         if (string.IsNullOrEmpty(opts.Content))
@@ -83,7 +84,7 @@ namespace CG2021
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Could not rebuild the website");
+                    _logger.LogError(ex, "Could not rebuild the website with url={url}, authorization={authorization}, and content={content}", opts.Url, opts.Authorization, opts.Content);
                 }
             }
         }
